@@ -1,0 +1,9 @@
+# 根仓库只追踪 docs/ 目录
+*
+!docs/
+!docs/**
+!.gitignore
+
+# macOS 垃圾文件
+._*
+.DS_Store

@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="积流（Distill）—— 基于 CODE + PARA 方法论的知识管理系统。灵感不竭，创造不止。">
+<meta name="theme-color" content="#ffffff">
+<meta property="og:title" content="Distill · 积流 — 灵感不竭，创造不止">
+<meta property="og:description" content="零摩擦录入，系统化整理。让每一次启动都不从零开始。">
+<meta property="og:type" content="website">
+<title>Distill · 积流 — 灵感不竭，创造不止</title>
+<link rel="icon" type="image/png" href="logo.png">
+<link rel="apple-touch-icon" href="logo.png">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", "Microsoft YaHei", sans-serif;
+    color: #1d1d1f; background: #ffffff; line-height: 1.6;
+    -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+  }
+
+  :root {
+    --bg: #f5f5f7; --surface: #ffffff; --border: rgba(0,0,0,0.06);
+    --text: #1d1d1f; --text-secondary: #6e6e73; --text-tertiary: #86868b;
+    --accent: #3b82f6; --accent-hover: #2563eb;
+  }
+
+  /* ── Nav ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 48px; backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    background: rgba(255,255,255,0.72); border-bottom: 1px solid var(--border);
+  }
+  nav.scrolled { box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  nav .logo { display: flex; align-items: center; gap: 10px; }
+  nav .logo .logo-img { width: 36px; height: 36px; border-radius: 7px; }
+  nav .logo .logo-text { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; color: var(--text); }
+  nav .nav-links { display: flex; gap: 32px; list-style: none; align-items: center; }
+  nav .nav-links a { font-size: 13px; font-weight: 450; color: var(--text-secondary); text-decoration: none; transition: color 0.2s; }
+  nav .nav-links a:hover { color: var(--text); }
+  nav .nav-right { display: flex; align-items: center; gap: 16px; }
+  nav .nav-login { font-size: 13px; font-weight: 450; color: var(--text-secondary); text-decoration: none; transition: color 0.2s; }
+  nav .nav-login:hover { color: var(--text); }
+  nav .nav-cta { font-size: 13px; font-weight: 600; color: #fff; background: var(--accent); padding: 8px 18px; border-radius: 20px; text-decoration: none; transition: all 0.2s; }
+  nav .nav-cta:hover { background: var(--accent-hover); }
+
+  /* ── Screen = full viewport unit ── */
+  .screen {
+    padding: 80px 64px;
+    position: relative;
+  }
+  .screen.alt { background: var(--bg); }
+  .screen-inner { width: 100%; max-width: 1200px; margin: 0 auto; }
+  .screen-center { text-align: center; }
+
+  /* ── Hero ── */
+  .screen-hero {
+    display: flex; flex-direction: column; justify-content: center;
+    min-height: 100vh;
+    background: radial-gradient(ellipse at 50% 0%, #f5f5f7 0%, #ffffff 55%);
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; font-weight: 500; color: var(--text-secondary);
+    background: var(--bg); padding: 6px 16px; border-radius: 20px;
+    margin-bottom: 28px;
+  }
+  .hero-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+  .hero-title {
+    font-size: clamp(48px, 7vw, 80px); font-weight: 700;
+    letter-spacing: -2px; line-height: 1.06; margin-bottom: 24px;
+    background: linear-gradient(135deg, #1d1d1f 0%, #404045 50%, #6e6e73 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero-sub { font-size: 21px; color: var(--text-secondary); font-weight: 400; margin-bottom: 48px; line-height: 1.7; max-width: 560px; margin-left: auto; margin-right: auto; }
+  .hero-cta { display: inline-flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 600; color: #fff; background: var(--accent); padding: 15px 40px; border-radius: 30px; text-decoration: none; transition: all 0.2s; }
+  .hero-cta:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(59,130,246,0.25); }
+  .scroll-hint { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 12px; color: var(--text-tertiary); letter-spacing: 1px; }
+  .scroll-hint .arrow { width: 20px; height: 20px; animation: bounce 2s ease-in-out infinite; }
+  @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
+
+  /* ── Section header ── */
+  .sec-label { font-size: 12px; font-weight: 600; color: var(--text-tertiary); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 16px; }
+  .sec-title { font-size: clamp(28px, 4vw, 42px); font-weight: 700; letter-spacing: -0.5px; line-height: 1.2; margin-bottom: 16px; }
+  .sec-sub { font-size: 17px; color: #515154; line-height: 1.8; max-width: 600px; }
+  .sec-sub.center { margin: 0 auto 48px; text-align: center; }
+
+  /* ── Methodology ── */
+  .method-head { text-align: center; margin-bottom: 16px; }
+  .method-code { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; }
+  .code-step { text-align: center; padding: 16px 20px; }
+  .code-step .c-letter { font-size: 52px; font-weight: 800; color: var(--text); letter-spacing: -1.5px; margin-bottom: 14px; display: block; }
+  .code-step h4 { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .code-step .c-en { font-size: 12px; color: var(--text-tertiary); display: block; margin-bottom: 8px; }
+  .code-step p { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+  .method-para { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 12px; }
+  .para-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px 24px; text-align: center; }
+  .para-card .p-icon { width: 30px; height: 30px; margin: 0 auto 14px; color: var(--text); }
+  .para-card .p-icon svg { width: 30px; height: 30px; }
+  .para-card h4 { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .para-card .p-en { font-size: 11px; color: var(--text-tertiary); }
+
+  /* ── Screenshot showcase ── */
+  .showcase { display: flex; gap: 48px; align-items: center; }
+  .showcase-text { flex: 0 0 260px; min-width: 0; }
+  .showcase-text h3 { font-size: 40px; font-weight: 800; letter-spacing: -0.8px; margin-bottom: 22px; line-height: 1.15; }
+  .showcase-text p { font-size: 13px; color: #515154; line-height: 1.8; margin-bottom: 22px; }
+  .showcase-steps { list-style: none; display: flex; flex-direction: column; gap: 2px; }
+  .showcase-steps li { display: flex; align-items: baseline; gap: 10px; font-size: 12px; color: var(--text-secondary); }
+  .showcase-steps li .ss-num { font-size: 14px; font-weight: 700; color: var(--accent); flex-shrink: 0; min-width: 24px; }
+  .showcase-img { flex: 1; min-width: 0; }
+  .showcase-img img {
+    width: 100%; border-radius: 14px;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 20px rgba(0,0,0,0.06), 0 8px 40px rgba(0,0,0,0.08);
+    transition: transform 0.35s cubic-bezier(0.25, 0.1, 0.25, 1), box-shadow 0.35s ease;
+  }
+  .showcase-img:hover img {
+    transform: scale(1.04);
+    box-shadow: 0 4px 28px rgba(0,0,0,0.1), 0 12px 56px rgba(0,0,0,0.12);
+  }
+  .showcase-img .img-placeholder {
+    width: 100%; aspect-ratio: 16/9; border-radius: 14px;
+    border: 2px dashed #d4d4d8; background: #fafafa;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 8px; color: var(--text-tertiary);
+    font-size: 14px;
+  }
+  .showcase-img .img-placeholder .ip-label { font-weight: 500; color: var(--text-secondary); }
+  .showcase-img .img-placeholder .ip-file { font-size: 12px; font-family: "SF Mono", monospace; color: var(--text-tertiary); }
+
+  /* ── Editor capability grid ── */
+  .cap-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 56px; }
+  .cap-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 26px 24px; transition: all 0.3s; }
+  .cap-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.06); }
+  .cap-card .cc-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 14px; background: var(--bg); }
+  .cap-card .cc-icon svg { width: 19px; height: 19px; color: var(--accent); }
+  .cap-card h4 { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .cap-card p { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+
+  /* ── CTA + Footer (final screen) ── */
+  .final-screen { min-height: 100vh; display: flex; flex-direction: column; }
+  .final-block { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg); padding: 64px 24px; text-align: center; }
+  .final-block .tech-strip { display: flex; flex-wrap: wrap; justify-content: center; gap: 28px; margin-bottom: 48px; }
+  .final-block .ts-item { font-size: 13px; color: var(--text-tertiary); font-family: "SF Mono", SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace; }
+  .final-block .fb-cta-text { font-size: 32px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; margin-bottom: 28px; line-height: 1.25; }
+  .final-block .cta-btn { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; color: #fff; background: var(--accent); padding: 12px 32px; border-radius: 24px; text-decoration: none; transition: all 0.2s; }
+  .final-block .cta-btn:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(59,130,246,0.25); }
+  .final-footer { background: var(--surface); padding: 40px 24px; text-align: center; }
+  .final-footer .f-logo { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 8px; }
+  .final-footer .f-logo-img { width: 46px; height: 46px; border-radius: 7px; }
+  .final-footer .f-logo-text { font-size: 24px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; }
+  .final-footer .f-slogan { font-size: 14px; color: var(--text-tertiary); letter-spacing: 2.5px; margin-bottom: 12px; }
+  .final-footer .f-phil { font-size: 12px; color: #c7c7cc; font-family: "SF Mono", monospace; margin-bottom: 16px; }
+  .final-footer .f-links { display: flex; justify-content: center; gap: 28px; margin-bottom: 16px; }
+  .final-footer .f-links a { font-size: 13px; color: var(--text-tertiary); text-decoration: none; transition: color 0.2s; }
+  .final-footer .f-links a:hover { color: var(--text); }
+  .final-footer .f-copy { font-size: 12px; color: #c7c7cc; }
+
+  @media (max-width: 900px) {
+    nav { padding: 12px 20px; }
+    nav .nav-links { display: none; }
+    .screen { padding: 80px 24px; height: auto; min-height: 100vh; }
+    .final-screen { height: auto; }
+    .method-code { grid-template-columns: 1fr 1fr; }
+    .method-para { grid-template-columns: 1fr 1fr; }
+    .showcase { flex-direction: column; gap: 36px; }
+    .showcase-text { flex: 1 1 auto !important; }
+    .showcase-text h3 { font-size: 28px; }
+    .cap-grid { grid-template-columns: 1fr 1fr; }
+    .hero-title { font-size: 34px; }
+    .hero-sub { font-size: 16px; }
+  }
+  @media (max-width: 540px) {
+    .screen { padding: 60px 16px; }
+    .sec-title { font-size: 22px; }
+    .cap-grid { grid-template-columns: 1fr; }
+    .method-code { grid-template-columns: 1fr 1fr; }
+    .method-para { grid-template-columns: 1fr 1fr; }
+    nav .nav-right { gap: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<nav id="navbar">
+  <div class="logo">
+    <img src="logo.png" alt="Distill · 积流" class="logo-img">
+    <span class="logo-text">Distill · 积流</span>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#features">功能</a></li>
+    <li><a href="#">解决方案</a></li>
+    <li><a href="#">资源</a></li>
+    <li><a href="#">定价</a></li>
+    <li><a href="#">下载</a></li>
+  </ul>
+  <div class="nav-right">
+    <a href="../src/index.html" class="nav-cta">立即体验</a>
+    <a href="#" class="nav-login" onclick="return false">登录</a>
+  </div>
+</nav>
+
+<!-- ══════════ 屏 1: Hero ══════════ -->
+<div class="screen screen-hero">
+  <div class="screen-inner screen-center">
+    <div class="hero-badge"><span class="dot"></span>Intelligence is a property.</div>
+    <h1 class="hero-title">灵感不竭<br>创造不止</h1>
+    <p class="hero-sub">零摩擦录入，系统化整理。让每一次启动都不从零开始。</p>
+    <a href="../src/index.html" class="hero-cta">立即体验</a>
+  </div>
+  <div class="scroll-hint">
+    <span>继续探索</span>
+    <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+  </div>
+</div>
+
+<!-- ══════════ 屏 2: 方法论 CODE + PARA ══════════ -->
+<div class="screen" id="features">
+  <div class="screen-inner">
+    <div class="method-head">
+      <h2 class="sec-title">基于《打造第二大脑》<br>CODE + PARA 方法论</h2>
+      <p class="sec-sub center">积流不是又一个笔记软件。它是一套知识管理操作系统——从捕捉到表达，每一步都有章法。</p>
+    </div>
+    <div class="method-code">
+      <div class="code-step">
+        <span class="c-letter">C</span>
+        <h4>捕捉</h4>
+        <span class="c-en">Capture</span>
+        <p>任何内容直接丢进去，不需要先想"该放哪"。</p>
+      </div>
+      <div class="code-step">
+        <span class="c-letter">O</span>
+        <h4>组织</h4>
+        <span class="c-en">Organize</span>
+        <p>内容落入工作台，归类到 PARA 四区域。</p>
+      </div>
+      <div class="code-step">
+        <span class="c-letter">D</span>
+        <h4>提炼</h4>
+        <span class="c-en">Distill</span>
+        <p>标注重点、写纲要，素材变成可复用知识块。</p>
+      </div>
+      <div class="code-step">
+        <span class="c-letter">E</span>
+        <h4>表达</h4>
+        <span class="c-en">Express</span>
+        <p>新项目启动时，相关素材已就绪。</p>
+      </div>
+    </div>
+    <div class="method-para">
+      <div class="para-card">
+        <div class="p-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg></div>
+        <h4>项目</h4>
+        <span class="p-en">Projects</span>
+      </div>
+      <div class="para-card">
+        <div class="p-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg></div>
+        <h4>领域</h4>
+        <span class="p-en">Areas</span>
+      </div>
+      <div class="para-card">
+        <div class="p-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg></div>
+        <h4>资源</h4>
+        <span class="p-en">Resources</span>
+      </div>
+      <div class="para-card">
+        <div class="p-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg></div>
+        <h4>归档</h4>
+        <span class="p-en">Archives</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ 屏 3: 快记捕捉 ══════════ -->
+<div class="screen alt" id="capture">
+  <div class="screen-inner">
+    <div class="showcase">
+      <div class="showcase-text">
+        <h3>看到就记，不需要先想该放哪</h3>
+        <p>文字、链接、图片、文件——丢进快记。粘贴链接自动抓取网页全文，支持 Markdown 格式书写。可选 AI 帮助把杂乱的闪念整理成结构化笔记。</p>
+        <ul class="showcase-steps">
+          <li><span class="ss-num">①</span>丢入任何内容</li>
+          <li><span class="ss-num">②</span>链接自动抓取全文</li>
+          <li><span class="ss-num">③</span>可选 AI 整理闪念</li>
+          <li><span class="ss-num">④</span>落入工作台待分拣</li>
+        </ul>
+      </div>
+      <div class="showcase-img">
+        <img src="screenshots/%E5%BF%AB%E8%AE%B01.png?v=2" alt="快记">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ 屏 4: 工作台 + PARA ══════════ -->
+<div class="screen alt" id="workbench">
+  <div class="screen-inner">
+    <div class="showcase">
+      <div class="showcase-text">
+        <h3>工作台处理流程，PARA 自动归位</h3>
+        <p>快记内容落入工作台的「待分拣」区。确认分类后进入「待提炼」区。改一个 PARA 标签，内容自动归入对应区域——不需要建文件夹。</p>
+        <ul class="showcase-steps">
+          <li><span class="ss-num">①</span>工作台待分拣 / 待提炼双区块</li>
+          <li><span class="ss-num">②</span>PARA 四区域自由切换</li>
+          <li><span class="ss-num">③</span>改标签即完成归类</li>
+          <li><span class="ss-num">④</span>侧边栏拖拽调整宽度，收起时 hover 浮窗</li>
+        </ul>
+      </div>
+      <div class="showcase-img">
+        <img src="screenshots/%E5%B7%A5%E4%BD%9C%E5%8F%B01.png?v=2" alt="工作台">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ 屏 5: 原子笔记 → 项目 ══════════ -->
+<div class="screen alt" id="notes">
+  <div class="screen-inner">
+    <div class="showcase">
+      <div class="showcase-text">
+        <h3>从原子笔记到项目，知识层层沉淀</h3>
+        <p>每篇笔记都是独立的原子知识块。标注重点、写纲要总结后，可关联到「行动」中的项目。项目完结时经验不会丢失——下一篇项目笔记里，相关素材已经就绪。</p>
+        <ul class="showcase-steps">
+          <li><span class="ss-num">①</span>标注重点，写纲要——渐进式归纳</li>
+          <li><span class="ss-num">②</span>属性面板：标签 / 分类 / 项目 / 提炼状态</li>
+          <li><span class="ss-num">③</span>原子笔记关联到「行动」中的项目</li>
+          <li><span class="ss-num">④</span>项目笔记中调用已有原子笔记，不零启动</li>
+        </ul>
+      </div>
+      <div class="showcase-img">
+        <img src="screenshots/%E7%AC%94%E8%AE%B01.png?v=2" alt="记笔记">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ 屏 6: 行动 ══════════ -->
+<div class="screen alt" id="actions">
+  <div class="screen-inner">
+    <div class="showcase">
+      <div class="showcase-text">
+        <h3>行动工作台，项目统筹</h3>
+        <p>行动是独立的项目工作区。从 PARA 各区域调用原子笔记，组织成项目看板。项目做完经验留存，下一个项目直接复用已有素材。</p>
+        <ul class="showcase-steps">
+          <li><span class="ss-num">①</span>创建项目，关联原子笔记</li>
+          <li><span class="ss-num">②</span>项目看板统筹所有素材</li>
+          <li><span class="ss-num">③</span>项目完结，经验自动归档</li>
+          <li><span class="ss-num">④</span>新项目启动直接调用已有素材</li>
+        </ul>
+      </div>
+      <div class="showcase-img">
+        <img src="screenshots/%E8%A1%8C%E5%8A%A8.png?v=2" alt="行动">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ 屏 7: 所有笔记 ══════════ -->
+<div class="screen alt" id="allnotes">
+  <div class="screen-inner">
+    <div class="showcase">
+      <div class="showcase-text">
+        <h3>所有笔记统筹，全局检索</h3>
+        <p>表格视图显示所有原子笔记，按来源、分类、项目、标签、提炼状态多维度筛选排序。全文搜索毫秒级响应，跨 PARA 区域统一检索。</p>
+        <ul class="showcase-steps">
+          <li><span class="ss-num">①</span>表格视图：按多维度筛选排序</li>
+          <li><span class="ss-num">②</span>全文搜索毫秒级响应</li>
+          <li><span class="ss-num">③</span>状态标签追踪提炼进度</li>
+          <li><span class="ss-num">④</span>跨 PARA 区域统一检索</li>
+        </ul>
+      </div>
+      <div class="showcase-img">
+        <img src="screenshots/%E6%89%80%E6%9C%89%E7%AC%94%E8%AE%B01.png?v=2" alt="所有笔记">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ 屏 8: 编辑能力 ══════════ -->
+<div class="screen" id="editor">
+  <div class="screen-inner">
+    <h2 class="sec-title">Tiptap 引擎驱动，16 种块类型</h2>
+    <p class="sec-sub">不只是写笔记。代码高亮、表格、折叠块、待办清单、笔记嵌入与 @ 引用——每一个功能都为深度思考和知识连接设计。</p>
+    <div class="cap-grid">
+      <div class="cap-card">
+        <div class="cc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+        <h4>Slash 命令菜单</h4>
+        <p>输入 / 呼出块插入菜单，段落/标题/代码/表格/折叠/图片快速切换。</p>
+      </div>
+      <div class="cap-card">
+        <div class="cc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg></div>
+        <h4>浮动格式工具栏</h4>
+        <p>选中文字弹出气泡菜单，加粗/斜体/链接/高亮，不打断写作心流。</p>
+      </div>
+      <div class="cap-card">
+        <div class="cc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+        <h4>笔记嵌入 & 引用</h4>
+        <p>在笔记中嵌入其他笔记，或 @ 引用——知识自然链接成网络。</p>
+      </div>
+      <div class="cap-card">
+        <div class="cc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg></div>
+        <h4>块级拖拽重排</h4>
+        <p>拖拽手柄调整段落顺序，重组内容像乐高一样直观。</p>
+      </div>
+      <div class="cap-card">
+        <div class="cc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/></svg></div>
+        <h4>浏览器式多标签</h4>
+        <p>同时打开多篇笔记，前进/后退历史栈——像浏览器一样切换上下文。</p>
+      </div>
+      <div class="cap-card">
+        <div class="cc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+        <h4>属性面板</h4>
+        <p>纲要/来源/标签/分类/项目/提炼状态——元数据驱动，搜索摘要可见。</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ 屏 9: 技术 + CTA + Footer ══════════ -->
+<div class="final-screen">
+  <div class="final-block">
+    <div class="sec-label" style="margin-bottom:12px;">Built with</div>
+    <div class="tech-strip">
+      <span class="ts-item">Tiptap</span>
+      <span class="ts-item">FlexSearch</span>
+      <span class="ts-item">highlight.js</span>
+      <span class="ts-item">Floating UI</span>
+      <span class="ts-item">defuddle</span>
+      <span class="ts-item">PWA</span>
+    </div>
+    <p class="fb-cta-text">打开积流，丢入你的第一个想法</p>
+    <a href="../src/index.html" class="cta-btn">立即体验</a>
+  </div>
+  <div class="final-footer">
+    <div class="f-logo">
+      <img src="logo.png" alt="Distill · 积流" class="f-logo-img">
+      <span class="f-logo-text">Distill · 积流</span>
+    </div>
+    <p class="f-slogan">灵感不竭，创造不止</p>
+    <p class="f-phil">Intelligence is a property.</p>
+    <div class="f-links">
+      <a href="#features">功能</a>
+      <a href="#">解决方案</a>
+      <a href="#">资源</a>
+      <a href="#">定价</a>
+      <a href="#">下载</a>
+    </div>
+    <p class="f-copy">&copy; 2026 Distill · 积流</p>
+  </div>
+</div>
+
+<script>
+(function(){
+  var el = document.getElementById('navbar');
+  window.addEventListener('scroll', function(){ el.classList.toggle('scrolled', window.scrollY > 10); });
+})();
+</script>
+
+</body>
+</html>
